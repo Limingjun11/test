@@ -20,8 +20,8 @@ jobs:
 
       - name: Run build script
         run: |
-          chmod +x build.sh
-          ./build.sh
+          chmod +x main.sh
+          ./main.sh
 
       - name: Publish Release
         uses: softprops/action-gh-release@v2
