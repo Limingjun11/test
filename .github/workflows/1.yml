@@ -10,22 +10,23 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+      - name: Install qemu-utils
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y qemu-utils
+
       - name: Download and Convert
         run: |
-          # 1. 下载
           echo "下载中..."
           wget -c "https://github.com/jqssun/android-lineage-qemu/releases/download/v2025.10.11/UTM-VM-lineage-22.2-20251011-jqssun-virtio_arm64only.zip" -O utm.zip
           
-          # 2. 解压
           echo "解压中..."
           mkdir -p extract
           unzip -o utm.zip -d extract
           
-          # 3. 打印解压后的结构（方便排错）
           echo "=== 解压后的文件列表 ==="
           find extract -type f
           
-          # 4. 智能寻找文件（不管它叫什么后缀）
           VDA_FILE=$(find extract -type f -name "vda*" | head -n 1)
           VDB_FILE=$(find extract -type f -name "vdb*" | head -n 1)
           
@@ -37,13 +38,18 @@ jobs:
           echo "✅ 找到 VDA: $VDA_FILE"
           echo "✅ 找到 VDB: $VDB_FILE"
           
-          # 5. 如果已经是 qcow2 就直接复制，如果是 img 就转换
+          # 判断后缀名来进行转换
           if [[ "$VDA_FILE" == *.qcow2 ]]; then
             cp "$VDA_FILE" ./vda_arm64only.qcow2
+          else
+            echo "转换 VDA 为 qcow2 格式中..."
+            qemu-img convert -f raw -O qcow2 -c "$VDA_FILE" ./vda_arm64only.qcow2
+          fi
+
+          if [[ "$VDB_FILE" == *.qcow2 ]]; then
             cp "$VDB_FILE" ./vdb_arm64only.qcow2
           else
-            echo "转换为 qcow2 格式中..."
-            qemu-img convert -f raw -O qcow2 -c "$VDA_FILE" ./vda_arm64only.qcow2
+            echo "转换 VDB 为 qcow2 格式中..."
             qemu-img convert -f raw -O qcow2 -c "$VDB_FILE" ./vdb_arm64only.qcow2
           fi
           
